@@ -2,6 +2,7 @@ package std
 
 import grails.gorm.transactions.Transactional
 import groovy.json.JsonSlurper
+import std.Device
 
 @Transactional
 class StapiService {
@@ -14,8 +15,8 @@ class StapiService {
 
     // Using only groovy, no micronaut
     def callAPI(String path) {
-        log.debug("ST_TOKEN = ${ST_TOKEN}")
-        log.debug("BASE_URL = ${BASE_URL}")
+//        log.debug("ST_TOKEN = ${ST_TOKEN}")
+//        log.debug("BASE_URL = ${BASE_URL}")
         def conn = new URL("${BASE_URL}${path}").openConnection() as HttpURLConnection
 
         // set some headers
@@ -51,15 +52,29 @@ class StapiService {
             if (device.containsKey('deviceId')) {
                 log.debug("idx = ${idx}")
                 log.debug("found deviceId = ${device.deviceId}")
+                def persistantDevice = Device.findByDeviceId(device.deviceId)
+                if (persistantDevice == null) {
+                    persistantDevice = new Device()
+                    persistantDevice.deviceId = device.deviceId
+                }
                 String rv = getValueByKey(device, "name")
+                persistantDevice.name = rv
                 rv = getValueByKey(device, "label")
+                persistantDevice.label = rv
                 rv = getValueByKey(device, "deviceType")
+                persistantDevice.deviceType = rv
                 rv = getValueByKey(device, "deviceNetworkType")
-                rv = getValueByKey(device, "NoSuchKey")
+                persistantDevice.deviceNetworkType = rv
+//                rv = getValueByKey(device, "NoSuchKey")
 
                 // Now get states
-                if (device.label != "Home Hub")   // name "SmartThings v2 Hub"
+                if (device.label != "Home Hub") {  // name "SmartThings v2 Hub"
                     rv = getCurrentStates(device.deviceId)
+                    persistantDevice.states = rv.inspect() // serialize to string
+                }
+
+                persistantDevice.save()
+                log.debug("persistantDevice.id = ${persistantDevice.id}")
             }
         }
     }
@@ -73,6 +88,7 @@ class StapiService {
             main.each {k, v ->
                 log.debug("k = ${k}, v = ${v}")
             }
+            return main
         }
 
         return null
