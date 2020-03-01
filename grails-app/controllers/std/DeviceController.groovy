@@ -6,13 +6,11 @@ import static org.springframework.http.HttpStatus.*
 class DeviceController {
 
     DeviceService deviceService
-    StapiService stapiService
 
     static allowedMethods = [save: "POST", update: "PUT", delete: "DELETE"]
 
     def index(Integer max) {
         log.debug("Testing logback")
-        def rv = stapiService.refresh()
         params.max = Math.min(max ?: 10, 100)
         def res =  deviceService.list(params)
         def count = [deviceCount: deviceService.count()]
