@@ -3,6 +3,7 @@ package std
 import grails.gorm.transactions.Transactional
 import groovy.json.JsonSlurper
 import std.Device
+import std.States
 
 @Transactional
 class StapiService {
@@ -52,29 +53,33 @@ class StapiService {
             if (device.containsKey('deviceId')) {
                 log.debug("idx = ${idx}")
                 log.debug("found deviceId = ${device.deviceId}")
-                def persistantDevice = Device.findByDeviceId(device.deviceId)
-                if (persistantDevice == null) {
-                    persistantDevice = new Device()
-                    persistantDevice.deviceId = device.deviceId
+                def persistentDevice = Device.findByDeviceId(device.deviceId)
+                if (persistentDevice == null) {
+                    persistentDevice = new Device()
+                    persistentDevice.deviceId = device.deviceId
                 }
                 String rv = getValueByKey(device, "name")
-                persistantDevice.name = rv
+                persistentDevice.name = rv
                 rv = getValueByKey(device, "label")
-                persistantDevice.label = rv
+                persistentDevice.label = rv
                 rv = getValueByKey(device, "deviceType")
-                persistantDevice.deviceType = rv
+                persistentDevice.deviceType = rv
                 rv = getValueByKey(device, "deviceNetworkType")
-                persistantDevice.deviceNetworkType = rv
+                persistentDevice.deviceNetworkType = rv
 //                rv = getValueByKey(device, "NoSuchKey")
 
                 // Now get states
                 if (device.label != "Home Hub") {  // name "SmartThings v2 Hub"
                     rv = getCurrentStates(device.deviceId)
-                    persistantDevice.states = rv.inspect() // serialize to string
+//                    persistentDevice.states = rv.inspect() // serialize to string
+                    def persistentState = new States()
+                    persistentState.device = persistentDevice
+                    persistentState.state = rv.inspect()
+                    persistentState.save()
                 }
 
-                persistantDevice.save()
-                log.debug("persistantDevice.id = ${persistantDevice.id}")
+                persistentDevice.save()
+                log.debug("persistentDevice.id = ${persistentDevice.id}")
             }
         }
     }

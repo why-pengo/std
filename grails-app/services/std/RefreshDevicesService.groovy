@@ -15,7 +15,6 @@ class RefreshDevicesService {
 
     @Scheduled(fixedDelay = 440000L, initialDelay = 15000L)
     void execute() {
-        log.debug("running...")
         stapiService.refresh()
     }
 }
